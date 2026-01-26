@@ -16,7 +16,6 @@ const (
 	ServiceName = "GateKeeper"
 	RegPath     = `SOFTWARE\Policies\GateKeeper`
 
-	// קבועי אירועי Session (Windows Constants)
 	WTS_SESSION_LOGON  = 0x5
 	WTS_SESSION_LOGOFF = 0x6
 	WTS_SESSION_LOCK   = 0x7
@@ -33,7 +32,6 @@ type gateKeeperService struct {
 }
 
 func main() {
-	// 1. אתחול הלוגים
 	var err error
 	elog, err = eventlog.Open(ServiceName)
 	if err != nil {
@@ -41,13 +39,11 @@ func main() {
 	}
 	defer elog.Close()
 
-	// 2. זיהוי האם אנחנו רצים כ-Service או ב-Console
 	isIntSess, err := svc.IsAnInteractiveSession()
 	if err != nil {
 		log.Fatalf("failed to determine session: %v", err)
 	}
 
-	// התקנה דרך שורת הפקודה
 	if len(os.Args) > 1 && os.Args[1] == "install" {
 		err := installService()
 		if err != nil {
@@ -78,24 +74,19 @@ func runConsoleMode() {
 	fmt.Println("Running in Console Mode (Debug)...")
 	fmt.Println("Simulating Lock Screen Protection...")
 
-	// יצירת מופע זמני לבדיקה
 	svc := &gateKeeperService{}
 	svc.startProtection()
 
-	// השארת התוכנה רצה לבדיקה
 	select {}
 }
 
 func (m *gateKeeperService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
-	// חובה לקבל את svc.AcceptSessionChange כדי לזהות נעילה/לוגין
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptSessionChange
 	changes <- svc.Status{State: svc.StartPending}
 
-	// טעינת הגדרות
 	config := loadConfig()
 	elog.Info(100, fmt.Sprintf("GateKeeper Started. Config Loaded: Enabled=%v", config.Enabled))
 
-	// הנחה התחלתית: ב-Boot אנחנו מגנים
 	m.startProtection()
 
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
@@ -111,7 +102,6 @@ loop:
 				m.stopProtection()
 				break loop
 			case svc.SessionChange:
-				// המרה של EventType ל-uint32 כדי להשוות לקבועים שלנו
 				m.handleSessionChange(uint32(c.EventType))
 			default:
 				elog.Warning(102, fmt.Sprintf("Unexpected control request #%d", c))
@@ -129,7 +119,6 @@ func (m *gateKeeperService) handleSessionChange(eventType uint32) {
 		elog.Info(200, "User Session Active -> Suspending Protection & Releasing Devices")
 		m.stopProtection()
 		
-		// התוספת הקריטית: שחרור התקנים כדי שה-DLP יקח פיקוד
 		go releaseAllBlockedDevices()
 
 	case WTS_SESSION_LOGOFF, WTS_SESSION_LOCK:
@@ -148,7 +137,6 @@ func (m *gateKeeperService) startProtection() {
 	m.isProtecting = true
 	m.wg.Add(1)
 
-	// הפעלת ה-Sentry (הסורק) שנמצא בקובץ sentry.go
 	go m.sentryLoop()
 }
 

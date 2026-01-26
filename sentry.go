@@ -57,10 +57,8 @@ func (m *gateKeeperService) sentryLoop() {
 }
 
 func scanPath(baseRegistryPath string, sessionCache map[string]bool) {
-	// פתיחת המפתח עם דיווח שגיאות
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, baseRegistryPath, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
-		// הנה התיקון הקריטי: אם נכשלים בפתיחה, נדע למה!
 		elog.Error(EventError, fmt.Sprintf("CRITICAL: Failed to open Registry path [%s]. Error: %v", baseRegistryPath, err))
 		return
 	}
@@ -72,8 +70,7 @@ func scanPath(baseRegistryPath string, sessionCache map[string]bool) {
 		return
 	}
 
-	// לוג דיאגנוסטי: כמה מכשירים מצאנו?
-	// נדפיס את זה רק פעם אחת פר סשן או אם זה 0, כדי לא להציף
+
 	if len(devices) == 0 {
 		// elog.Warning(EventWarn, fmt.Sprintf("DEBUG: No devices found in %s", baseRegistryPath))
 	} 
@@ -125,14 +122,12 @@ func analyzeAndAct(regPath string, fullDeviceID string, sessionCache map[string]
 
 	classGUID, _, err := k.GetStringValue("ClassGUID")
 	
-	// דיווח על Whitelist (כדי שנדע שאנחנו רואים משהו)
 	if allowedGuids[strings.ToLower(classGUID)] {
 		sessionCache[fullDeviceID] = true
 		// elog.Info(EventInfo, fmt.Sprintf("DEBUG: Skipping Whitelisted Device: %s (Class: %s)", fullDeviceID, classGUID))
 		return
 	}
 
-	// אם הגענו לפה - מנסים לחסום
 	configFlags, _, err := k.GetIntegerValue("ConfigFlags")
 	isRegistrySaysDisabled := (err == nil && (configFlags&0x00000001) != 0)
 
@@ -144,18 +139,16 @@ func analyzeAndAct(regPath string, fullDeviceID string, sessionCache map[string]
 			elog.Info(EventInfo, fmt.Sprintf("SUCCESS: Blocked %s (GUID: %s)", fullDeviceID, classGUID))
 		}
 	} else {
-		// אם נכשלנו לחסום, נדפיס למה - אבל נסנן הודעות רגילות
 		if !strings.Contains(output, "device is not connected") {
 			elog.Error(EventError, fmt.Sprintf("FAILED to block %s. Out: %s", fullDeviceID, output))
 		} else {
-			// זה המצב הנפוץ - המכשיר בהיסטוריה אבל לא מחובר
-			// במצב דיבוג אולי נרצה לראות את זה פעם אחת
+
 		}
 	}
 }
 
 func runPnpCommand(action string, deviceArg string) (bool, string) {
-	// בדיקה האם PnPUtil קיים בכלל (אולי AppLocker חוסם?)
+
 	if _, err := os.Stat(PnpUtilPath); os.IsNotExist(err) {
 		return false, "CRITICAL: pnputil.exe NOT FOUND!"
 	}
@@ -178,7 +171,7 @@ func runPnpCommand(action string, deviceArg string) (bool, string) {
 func releaseAllBlockedDevices() {
 	elog.Info(EventInfo, "DEBUG: Handover started (Diagnostic Mode)...")
 	
-	// בדיקה האם אנחנו מצליחים לקרוא בכלל בשלב השחרור
+	
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Enum\USB`, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
 		elog.Error(EventError, fmt.Sprintf("CRITICAL: Handover cannot read Registry! Error: %v", err))
@@ -186,8 +179,6 @@ func releaseAllBlockedDevices() {
 	}
 	k.Close()
 
-	// ... המשך הקוד הרגיל ...
-	// (אין שינוי בלוגיקה של השחרור, רק בבדיקת הגישה למעלה)
 	
 	pathsToScan := []string{
 		`SYSTEM\CurrentControlSet\Enum\USB`,
