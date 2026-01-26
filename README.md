@@ -1,4 +1,4 @@
-# 🛡️ GateKeeper: Zero-Trust USB Hardening
+# 🛡️ GateKeeper: Zero-Trust USB Hardening Version V1.2
 
 > **Pre-Login Endpoint Protection & Data Leakage Prevention (DLP)**
 
@@ -12,7 +12,7 @@ GateKeeper is a lightweight, hardened Windows Service written in Go. It enforces
 * **Native Performance:** Written in Go (Golang), zero dependencies, minimal footprint (<5MB).
 * **Seamless Handover:** Instantly re-enables devices upon valid user login for corporate DLP inspection.
 
-## 🛠️ Installation
+##  Installation
 
 ### Prerequisites
 * Windows 10 / 11 / Server 2016+
