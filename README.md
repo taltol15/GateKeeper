@@ -1,29 +1,26 @@
-# 🛡️ GateKeeper: Zero-Trust USB Hardening Version V1.2
+# 🛡️ GateKeeper L (Lite)
 
-> **Pre-Login Endpoint Protection & Data Leakage Prevention (DLP)**
+> **Special Edition: Pre-Login Enforcement Only**
 
-GateKeeper is a lightweight, hardened Windows Service written in Go. It enforces a strict **Zero-Trust policy** on USB ports whenever the workstation is locked (Pre-Login / Lock Screen), effectively closing the security gap before the OS or corporate DLP agents fully load.
+Current Branch: `gatekeeper-lite`
+For the full Enterprise version (that blocks Lock Screen as well), switch to the [main branch](../../tree/main).
 
-## Key Features
+---
 
-* **Aggressive Enforcement:** Automatically disables drivers for Mass Storage (Flash drives) and Network Adapters (Tethering) when the screen is locked.
-* **Zero-Trust:** Whitelist-based approach. Only Keyboards, Mice, and authorized Hubs remain active.
-* **Hardened Service:** Protected by custom SDDL (Security Descriptor), preventing local admins from stopping or tampering with the service.
-* **Native Performance:** Written in Go (Golang), zero dependencies, minimal footprint (<5MB).
-* **Seamless Handover:** Instantly re-enables devices upon valid user login for corporate DLP inspection.
+## ⚡ What is GateKeeper L?
+This is a specific variant of the GateKeeper security tool designed for environments where **background tasks must continue running when the screen is locked**.
 
-##  Installation
+### Key Differences
+| Feature | GateKeeper (Main) | GateKeeper L (Lite) |
+| :--- | :--- | :--- |
+| **Boot / Pre-Login** | 🔒 Blocked | 🔒 Blocked |
+| **User Logged In** | ✅ Allowed | ✅ Allowed |
+| **Screen Lock (Win+L)** | 🔒 **Blocked** | ✅ **Allowed (Active)** |
+| **Logoff / Sign Out** | 🔒 Blocked | 🔒 Blocked |
 
-### Prerequisites
-* Windows 10 / 11 / Server 2016+
-* Administrator Privileges
+## 🛠️ Installation
+1. Download `gatekeeper-l.exe` and `Setup_GUI.ps1`.
+2. Run `Setup_GUI.ps1` with PowerShell.
+3. Click **Install & Harden**.
 
-### Quick Install (Production)
-1.  Download the latest release.
-2.  Right-click `Setup_GUI.ps1` and select **Run with PowerShell**.
-3.  Click **Install & Harden**.
-
-### Manual / Enterprise Deployment (SCCM/Intune)
-Run the following PowerShell command as SYSTEM/Admin:
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File install_prod.ps1
+---
