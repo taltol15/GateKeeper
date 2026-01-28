@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ServiceName = "GateKeeper"
+	ServiceName = "GateKeeper-L" // שיניתי את השם כדי למנוע בלבול עם הגרסה הרגילה
 	RegPath     = `SOFTWARE\Policies\GateKeeper`
 
 	WTS_SESSION_LOGON  = 0x5
@@ -72,7 +72,7 @@ func runServiceMode() {
 
 func runConsoleMode() {
 	fmt.Println("Running in Console Mode (Debug)...")
-	fmt.Println("Simulating Lock Screen Protection...")
+	fmt.Println("GateKeeper-L: Simulating Pre-Login Protection (ignoring Lock)...")
 
 	svc := &gateKeeperService{}
 	svc.startProtection()
@@ -85,8 +85,9 @@ func (m *gateKeeperService) Execute(args []string, r <-chan svc.ChangeRequest, c
 	changes <- svc.Status{State: svc.StartPending}
 
 	config := loadConfig()
-	elog.Info(100, fmt.Sprintf("GateKeeper Started. Config Loaded: Enabled=%v", config.Enabled))
+	elog.Info(100, fmt.Sprintf("GateKeeper-L Started. Config Loaded: Enabled=%v", config.Enabled))
 
+	// חובה: מתחילים במצב חסימה (עבור Boot/Restart כשאין עדיין יוזר)
 	m.startProtection()
 
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
@@ -113,6 +114,7 @@ loop:
 	return false, 0
 }
 
+// --- השינוי הגדול נמצא כאן ---
 func (m *gateKeeperService) handleSessionChange(eventType uint32) {
 	switch eventType {
 	case WTS_SESSION_LOGON, WTS_SESSION_UNLOCK:
@@ -121,9 +123,15 @@ func (m *gateKeeperService) handleSessionChange(eventType uint32) {
 		
 		go releaseAllBlockedDevices()
 
-	case WTS_SESSION_LOGOFF, WTS_SESSION_LOCK:
-		elog.Info(201, "User Locked/Away -> Enabling Protection")
+	case WTS_SESSION_LOGOFF:
+		// רק כשהמשתמש מתנתק לגמרי (Sign out) אנחנו חוסמים
+		elog.Info(201, "User Logged Off -> Enabling Protection")
 		m.startProtection()
+
+	case WTS_SESSION_LOCK:
+		// כאן השינוי: בנעילת מסך (Win+L) אנחנו לא עושים כלום!
+		// המכשיר יישאר במצב שהיה קודם (כלומר: פתוח, כי המשתמש מחובר)
+		elog.Info(202, "Session Locked (Win+L) -> Ignoring (Policy: GateKeeper-L / Pre-Login Only)")
 	}
 }
 
@@ -137,7 +145,7 @@ func (m *gateKeeperService) startProtection() {
 	m.isProtecting = true
 	m.wg.Add(1)
 
-	go m.sentryLoop()
+	go m.sentryLoop() // קורא לפונקציה מתוך sentry.go (ללא שינוי)
 }
 
 func (m *gateKeeperService) stopProtection() {
@@ -187,8 +195,8 @@ func installService() error {
 		return fmt.Errorf("service %s already exists", ServiceName)
 	}
 	s, err = m.CreateService(ServiceName, exepath, mgr.Config{
-		DisplayName: "GateKeeper USB Security",
-		Description: "Secures USB ports during pre-login state.",
+		DisplayName: "GateKeeper L (Pre-Login Only)", // שם מעודכן לתצוגה
+		Description: "Secures USB ports ONLY during Boot/Logoff (ignores Lock Screen).",
 		StartType:   mgr.StartAutomatic,
 	})
 	if err != nil {

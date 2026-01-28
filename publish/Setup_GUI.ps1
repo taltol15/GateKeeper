@@ -1,5 +1,5 @@
 <#
-    GateKeeper Installer GUI
+    GateKeeper-L Installer GUI
     Professional Setup Wizard for Manual Installations
 #>
 
@@ -14,14 +14,14 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # --- Configuration ---
-$ServiceName = "GateKeeper"
-$ExeName = "gatekeeper.exe"
-$InstallDir = "C:\Program Files\GateKeeper"
+$ServiceName = "GateKeeper-L"
+$ExeName = "gatekeeper-l.exe"
+$InstallDir = "C:\Program Files\GateKeeper-L"
 $SourceExe = "$PSScriptRoot\$ExeName"
 
 # --- GUI Setup ---
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "GateKeeper Setup"
+$form.Text = "GateKeeper-L Setup"
 $form.Size = New-Object System.Drawing.Size(500,400)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
@@ -30,7 +30,7 @@ $form.BackColor = "#ffffff"
 
 # Title
 $title = New-Object System.Windows.Forms.Label
-$title.Text = "GateKeeper Endpoint Protection"
+$title.Text = "GateKeeper L (Pre-Login Only)"
 $title.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
 $title.ForeColor = "#0078D7"
 $title.AutoSize = $true
@@ -39,7 +39,7 @@ $form.Controls.Add($title)
 
 # Subtitle
 $subTitle = New-Object System.Windows.Forms.Label
-$subTitle.Text = "Zero-Trust USB Enforcement System"
+$subTitle.Text = "Secures USB ports ONLY during Boot/Logoff"
 $subTitle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 $subTitle.ForeColor = "#555555"
 $subTitle.AutoSize = $true
@@ -55,7 +55,7 @@ $logBox.Location = New-Object System.Drawing.Point(20, 90)
 $logBox.Size = New-Object System.Drawing.Size(440, 180)
 $logBox.Font = New-Object System.Drawing.Font("Consolas", 9)
 $logBox.BackColor = "#f0f0f0"
-$logBox.Text = "Ready to install. Please ensure gatekeeper.exe is in the same folder.`r`n"
+$logBox.Text = "Ready to install. Please ensure gatekeeper-l.exe is in the same folder.`r`n"
 $form.Controls.Add($logBox)
 
 # Helper Function for Logging
@@ -103,8 +103,8 @@ $btnInstall.Add_Click({
 
     # Check for EXE
     if (!(Test-Path $SourceExe)) {
-        Write-Log "ERROR: gatekeeper.exe not found!"
-        [System.Windows.Forms.MessageBox]::Show("gatekeeper.exe missing!", "Error", "OK", "Error")
+        Write-Log "ERROR: gatekeeper-l.exe not found!"
+        [System.Windows.Forms.MessageBox]::Show("gatekeeper-l.exe missing!", "Error", "OK", "Error")
         $btnInstall.Enabled = $true
         return
     }
@@ -125,7 +125,7 @@ $btnInstall.Add_Click({
     # Create Service
     Write-Log "Registering Windows Service..."
     $BinPath = "$InstallDir\$ExeName"
-    sc.exe create $ServiceName binPath= $BinPath start= auto DisplayName= "GateKeeper Endpoint Protection" | Out-Null
+    sc.exe create $ServiceName binPath= $BinPath start= auto DisplayName= "GateKeeper L (Pre-Login Only)" | Out-Null
 
     # Recovery
     Write-Log "Setting recovery options..."
@@ -142,14 +142,14 @@ $btnInstall.Add_Click({
     sc.exe sdset $ServiceName $HardenedSDDL | Out-Null
 
     Write-Log "SUCCESS: Installation Complete!"
-    [System.Windows.Forms.MessageBox]::Show("GateKeeper Installed Successfully!", "Success", "OK", "Information")
+    [System.Windows.Forms.MessageBox]::Show("GateKeeper-L Installed Successfully!", "Success", "OK", "Information")
     
     $btnInstall.Enabled = $true
     $btnUninstall.Enabled = $true
 })
 
 $btnUninstall.Add_Click({
-    if ([System.Windows.Forms.MessageBox]::Show("Are you sure you want to remove GateKeeper?", "Confirm", "YesNo", "Warning") -eq "No") { return }
+    if ([System.Windows.Forms.MessageBox]::Show("Are you sure you want to remove GateKeeper-L?", "Confirm", "YesNo", "Warning") -eq "No") { return }
     
     $btnInstall.Enabled = $false
     $btnUninstall.Enabled = $false
@@ -159,7 +159,7 @@ $btnUninstall.Add_Click({
     Write-Log "Removing Security Hardening..."
     Remove-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\$ServiceName" -Recurse -Force -ErrorAction SilentlyContinue
     
-    # Try standard stop (might fail if hardening is active, but reg delete handles it on reboot)
+    # Try standard stop
     sc.exe stop $ServiceName | Out-Null
     
     # Remove Files

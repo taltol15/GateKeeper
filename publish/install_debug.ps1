@@ -1,12 +1,12 @@
-# GateKeeper Installer (DEBUG VERSION - Admin Access Allowed)
+# GateKeeper-L Installer (DEBUG VERSION - Admin Access Allowed)
 # Run as Administrator
 
-$ServiceName = "GateKeeper"
-$ExeName = "gatekeeper.exe"
-$InstallDir = "C:\Program Files\GateKeeper"
+$ServiceName = "GateKeeper-L"
+$ExeName = "gatekeeper-l.exe"
+$InstallDir = "C:\Program Files\GateKeeper-L"
 $SourceExe = "$PSScriptRoot\$ExeName"
 
-Write-Host "Starting GateKeeper Installation (Debug Mode)..." -ForegroundColor Cyan
+Write-Host "Starting GateKeeper-L Installation (Debug Mode)..." -ForegroundColor Cyan
 
 # 1. Stop and Clean previous versions
 if (Get-Service $ServiceName -ErrorAction SilentlyContinue) {
@@ -27,12 +27,9 @@ Copy-Item -Path $SourceExe -Destination "$InstallDir\$ExeName" -Force
 
 # 4. Create Service
 $BinPath = "$InstallDir\$ExeName"
-sc.exe create $ServiceName binPath= $BinPath start= auto DisplayName= "GateKeeper Endpoint Protection"
+sc.exe create $ServiceName binPath= $BinPath start= auto DisplayName= "GateKeeper L (Pre-Login Only)"
 
 # 5. HARDENING (MILD VERSION FOR DEBUGGING)
-# כאן השינוי: נתנו ל-BA (אדמינים) הרשאות מלאות (GA = Generic All)
-# SYSTEM (SY) = Full Access
-# Admins (BA) = Full Access (כדי שתוכל לדבג)
 $SDDL = "D:(A;;GA;;;SY)(A;;GA;;;BA)"
 sc.exe sdset $ServiceName $SDDL
 
